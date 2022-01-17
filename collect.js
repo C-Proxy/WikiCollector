@@ -11,7 +11,8 @@ const searchLimit = parseInt(argv[3]);
 const widthLimit = parseInt(argv[4]);
 const heightLimit = parseInt(argv[5]);
 
-const savPath = "./result/" + searchWord;
+const resPath = "./result";
+const savPath = resPath + "/" + searchWord;
 const imgPath = savPath + "/images";
 const datPath = savPath + "/data";
 
@@ -39,7 +40,8 @@ const option = { headless: true };
     makeSaveDirectories();
     await Promise.all(
       urls.map(
-        async (url) => await saveFilesAll(searchWord, await openPage(url))
+        async (url) =>
+          await saveAllImagesFromPage(searchWord, await openPage(url))
       )
     );
   } catch (error) {
@@ -51,6 +53,9 @@ const option = { headless: true };
 
 //---functions---
 function makeSaveDirectories() {
+  if (!fs.existsSync(resPath)) {
+    fs.mkdirSync(resPath);
+  }
   if (!fs.existsSync(savPath)) {
     fs.mkdirSync(savPath);
   }
@@ -82,37 +87,40 @@ async function getImageInfos(page) {
     { widthLimit, heightLimit }
   );
 }
-async function saveFilesAll(searchWord, linkPage) {
+async function saveAllImagesFromPage(searchWord, linkPage) {
   const linkInfo = { url: await linkPage.url(), title: await linkPage.title() };
   const imageInfos = await getImageInfos(linkPage);
   console.log(imageInfos.length + " matched Images in " + linkInfo.title);
   await Promise.all(
     imageInfos.map(
-      async (imageInfo) => await saveFiles(searchWord, linkInfo, imageInfo)
+      async (imageInfo) =>
+        await saveImages(imageInfo, () =>
+          saveJson(searchWord, linkInfo, imageInfo)
+        )
     )
   );
 }
-async function saveFiles(searchWord, pageInfo, imageInfo) {
+async function saveImages(imageInfo, callback) {
   console.log("Requesting:" + imageInfo.url);
   const sendRequest = () =>
     request(
       { method: "GET", url: imageInfo.url, encoding: null },
       (err, res, body) => {
         if (!err && res.statusCode === 200) {
-          console.log("Request:Success");
+          console.log("Success: " + imageInfo.fileName);
           fs.writeFile(
             imgPath + "/" + imageInfo.fileName,
             body,
             "binary",
-            saveJson(searchWord, pageInfo, imageInfo)
+            callback
           );
         } else {
-          console.log("Request:Failed");
-          await sleep(100);
-          sendRequest();
+          console.log("Failed(" + res.statusCode + "): " + imageInfo.fileName);
+          setTimeout(sendRequest, 1000);
         }
       }
     );
+  sendRequest();
 }
 function saveJson(searchWord, pageInfo, imageInfo) {
   const jsonData = JSON.stringify({
