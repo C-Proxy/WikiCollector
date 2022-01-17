@@ -1,0 +1,10 @@
+{
+  "name": "wiki_collector",
+  "scripts": {
+    "test": "node collect.js キャベツ 3 50 50"
+  },
+  "dependencies": {
+    "puppeteer": "^13.0.1",
+    "request": "^2.88.2"
+  }
+}
