@@ -26,6 +26,11 @@ const datPath = savPath + "/data";
 const maxTrials = 10;
 const interval = 5000;
 
+const userAgent =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+  "AppleWebKit/537.36 (KHTML, like Gecko) " +
+  "Chrome/96.0.4664.110 Safari/537.36";
+
 let browser;
 let queue;
 const option = { headless: true };
@@ -121,6 +126,7 @@ function assignSaveTaskToQueue(srcInfo, trials) {
 async function openPage(url) {
   console.log("Open: " + url);
   const page = await browser.newPage();
+  page.setUserAgent(userAgent);
   await page.goto(url);
   return page;
 }
@@ -164,8 +170,17 @@ async function getImageInfos(page) {
 // }
 function trySavePromise(imageInfo) {
   return new Promise((resolve) => {
+    console.log(`Request url: ${imageInfo.url}`);
     request(
-      { method: "GET", url: imageInfo.url, encoding: null },
+      {
+        method: "GET",
+        url: imageInfo.url,
+        encoding: null,
+        headers: {
+          "User-Agent": userAgent,
+        },
+        timeout: 30000,
+      },
       (err, res, body) => {
         const code = res.statusCode;
         if (!err && code === 200) {
