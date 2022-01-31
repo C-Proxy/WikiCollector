@@ -1,9 +1,11 @@
 {
   "name": "wiki_collector",
+  "type": "module",
   "scripts": {
     "test": "node collect.js キャベツ 3 50 50"
   },
   "dependencies": {
+    "p-queue": "^7.1.0",
     "puppeteer": "^13.0.1",
     "request": "^2.88.2"
   }
